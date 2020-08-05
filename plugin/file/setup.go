@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"fmt"
 
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
@@ -87,6 +88,7 @@ func fileParse(c *caddy.Controller) (Zones, error) {
 				if err == nil {
 					z[origins[i]] = zone
 				} else {
+					fmt.Println("---TORNO 90---")
 					return Zones{}, err
 				}
 			}
@@ -140,5 +142,6 @@ func fileParse(c *caddy.Controller) (Zones, error) {
 		log.Warningf("Failed to open %q: trying again in %s", openErr, reload)
 
 	}
+	fmt.Println("---TORNO FINALE---")
 	return Zones{Z: z, Names: names}, nil
 }

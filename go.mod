@@ -1,5 +1,7 @@
 module github.com/coredns/coredns
 
+replace github.com/coredns/coredns/plugin/file => /home/fabrizio/coredns/plugin/file/
+
 go 1.13
 
 require (
@@ -39,6 +41,6 @@ require (
 	gopkg.in/DataDog/dd-trace-go.v1 v1.25.0
 	k8s.io/api v0.18.6
 	k8s.io/apimachinery v0.18.6
-	k8s.io/client-go v0.18.6
+	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v1.0.0
 )

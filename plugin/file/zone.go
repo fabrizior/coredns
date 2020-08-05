@@ -116,6 +116,7 @@ func (z *Zone) Insert(r dns.RR) error {
 		r.(*dns.SRV).Target = strings.ToLower(r.(*dns.SRV).Target)
 	}
 
+//	fmt.Printf("--- Tree %T --- \n%s\n", r,r)
 	z.Tree.Insert(r)
 	return nil
 }

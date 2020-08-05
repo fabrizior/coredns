@@ -8,6 +8,14 @@ type Elem struct {
 	name string // owner name
 }
 
+// Elems è una lista di Elem con nomi diversi
+// Elems is a list (ms slice) of element in tree
+// name is the searched string contaning *
+type Elems struct {
+	ms []Elem	// slice
+	name string	// search name with wildcard
+}
+
 // newElem returns a new elem.
 func newElem(rr dns.RR) *Elem {
 	e := Elem{m: make(map[uint16][]dns.RR)}
@@ -99,3 +107,25 @@ func (e *Elem) Delete(rr dns.RR) {
 
 // Less is a tree helper function that calls less.
 func Less(a *Elem, name string) int { return less(name, a.Name()) }
+
+
+// Name returns the name of Elems.
+func (es *Elems) Name() string {
+		return es.name
+}
+
+// Name returns the name of Elems.
+func (es *Elems) Elements() []Elem {
+		return es.ms
+}
+
+// Types returns records all Elem with qtype type. The returned list is not sorted.
+func (els *Elems) ElemsType(qtype uint16) []dns.RR {
+	rr := []dns.RR{}	// empty slice
+	for _, e := range els.ms {
+		r := e.Type(qtype)
+		rr = append(rr, r...)
+	}
+	return rr
+}
+

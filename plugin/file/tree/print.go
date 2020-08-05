@@ -13,16 +13,39 @@ func (t *Tree) Print() {
 func (n *Node) print() {
 	q := newQueue()
 	q.push(n)
+//	fmt.Printf("---Q--- %T %s\n", q, q)   		// *tree.queue	
+//	fmt.Printf("--- Print --- %T %s\n", n, n)	// *tree.Node
 
+//	ss := *n.Elem	//n.Elem è un puntatore
+/*	scan := (*n.Elem).m
+	for k, v := range scan {
+		fmt.Printf("--Elem-- %d %s--\n", k, v) 
+		for  _, rr := range v {
+			fmt.Printf("--RR %s--\n",rr)
+		}
+	}
+*/
 	nodesInCurrentLevel := 1
 	nodesInNextLevel := 0
 
-	for !q.empty() {
+	for i:=0; !q.empty(); i++ {
 		do := q.pop()
+/*
+		if do != nil   {
+			fmt.Printf("\n---Do---%s-- ",  do.Elem.Name())	// *tree.Node	
+
+			if do.Left != nil {
+				fmt.Printf("L**%s*L ",  do.Left.Elem.Name() )	// *tree.Node	
+			}
+			if do.Right != nil {
+				fmt.Printf("R*%s*R\n",  do.Right.Elem.Name() )	// *tree.Node	
+			}
+		}
+*/
 		nodesInCurrentLevel--
 
 		if do != nil {
-			fmt.Print(do.Elem.Name(), " ")
+			fmt.Print(i, " ", do.Elem.Name(), " ")
 			q.push(do.Left)
 			q.push(do.Right)
 			nodesInNextLevel += 2

@@ -1,0 +1,18 @@
+rex.loc:5300 {
+  file ./zones/db.rex.loc  {
+    transfer to * 
+##    reload 45s
+  }
+  health
+##  errors stdout
+##  log stdout
+  errors
+  log
+}
+
+.:5300 {
+##  any
+  errors
+  log
+  forward . 8.8.8.8
+}

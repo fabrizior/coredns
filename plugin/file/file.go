@@ -32,18 +32,32 @@ type (
 // ServeDNS implements the plugin.Handle interface.
 func (f File) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
+//	fmt.Printf("---file.go State %T\n %s---\n" ,state , state  )
 
 	qname := state.Name()
+
+//	fmt.Printf("---file.go f.Zones.Name prima  %T\n %s---\n" , f.Zones.Names, f.Zones.Names  )
 	// TODO(miek): match the qname better in the map
 	zone := plugin.Zones(f.Zones.Names).Matches(qname)
+//	fmt.Printf("---file.go Z  %T\n %s---\n" , f.Zones.Z, f.Zones.Z  )
+/*
+        for index,element := range f.Zones.Z {
+            fmt.Println("Element' ", index,"=>",*element)
+    	}
+*/	
 	if zone == "" {
 		return plugin.NextOrFailure(f.Name(), f.Next, ctx, w, r)
 	}
 
+//	for nam, n := range f.Zones.Names {
+//		fmt.Println("xxx ", nam, n)
+//	}
 	z, ok := f.Zones.Z[zone]
+//	fmt.Printf("---file.go z.Apex  %d---\n" , z.Apex)
 	if !ok || z == nil {
 		return dns.RcodeServerFailure, nil
 	}
+
 
 	// This is only for when we are a secondary zones.
 	if r.Opcode == dns.OpcodeNotify {
@@ -83,7 +97,15 @@ func (f File) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (i
 	}
 
 	answer, ns, extra, result := z.Lookup(ctx, state, qname)
+/*	
+	for i, _ := range answer {
+		fmt.Printf("--- anwer %T, ---%s---\n", answer, answer[i])
+	}
 
+	for i, _ := range ns {
+		fmt.Printf("--- anwer %T, ---%s---\n", ns, ns[i])
+	}
+*/
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Authoritative = true
@@ -127,6 +149,7 @@ func Parse(f io.Reader, origin, fileName string, serial int64) (*Zone, error) {
 	z := NewZone(origin, fileName)
 	seenSOA := false
 	for rr, ok := zp.Next(); ok; rr, ok = zp.Next() {
+//		fmt.Printf("--- RR %T, ==> %s ---\n", rr, rr) 
 		if err := zp.Err(); err != nil {
 			return nil, err
 		}

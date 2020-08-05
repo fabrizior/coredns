@@ -2,6 +2,8 @@ package file
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/coredns/coredns/plugin/file/rrutil"
 	"github.com/coredns/coredns/plugin/file/tree"
@@ -43,7 +45,6 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 	if ap.SOA == nil {
 		return nil, nil, nil, ServerFailure
 	}
-
 	if qname == z.origin {
 		switch qtype {
 		case dns.TypeSOA:
@@ -56,10 +57,11 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 	}
 
 	var (
-		found, shot    bool
+		found, shot, star   bool
 		parts          string
 		i              int
 		elem, wildElem *tree.Elem
+		elems *tree.Elems
 	)
 
 	// Lookup:
@@ -81,13 +83,25 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 		if shot {
 			break
 		}
+		fmt.Printf("---Parts--- %s\n",parts)
+		// if parts contain any string folloewd by * and domain name
+		// ex. m12*.domain
+		if idx := strings.Index(parts[1:], "*"); idx >=0 { 
+			elems, star = tr.Tsearch(parts)
+			fmt.Println("\t--LOOKUP--\n", elems.Name())
+			// Elems, wich contain a list of Elem, is returned by Tsearch
+			for _, els := range elems.Elements() {
+				fmt.Printf("\t--lookup-bis- %s --%s\n\n", els.Name(), els)
+			}
+		} else {
+			elem, found = tr.Search(parts)
+		}
 
-		elem, found = tr.Search(parts)
+//		fmt.Println("---Passo--1 ", i, " star ", star, " elem ", *elem)
 		if !found {
 			// Apex will always be found, when we are here we can search for a wildcard
 			// and save the result of that search. So when nothing match, but we have a
 			// wildcard we should expand the wildcard.
-
 			wildcard := replaceWithAsteriskLabel(parts)
 			if wild, found := tr.Search(wildcard); found {
 				wildElem = wild
@@ -101,7 +115,8 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 		}
 
 		// If we see DNAME records, we should return those.
-		if dnamerrs := elem.Type(dns.TypeDNAME); dnamerrs != nil {
+//		fmt.Println("---Passo--2")
+		if dnamerrs := elem.Type(dns.TypeDNAME); dnamerrs != nil  {
 			// Only one DNAME is allowed per name. We just pick the first one to synthesize from.
 			dname := dnamerrs[0]
 			if cname := synthesizeCNAME(state.Name(), dname.(*dns.DNAME)); cname != nil {
@@ -125,6 +140,7 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 		}
 
 		// If we see NS records, it means the name as been delegated, and we should return the delegation.
+//		fmt.Println("---Passo--3")
 		if nsrrs := elem.Type(dns.TypeNS); nsrrs != nil {
 
 			// If the query is specifically for DS and the qname matches the delegated name, we should
@@ -148,18 +164,28 @@ func (z *Zone) Lookup(ctx context.Context, state request.Request, qname string) 
 	}
 
 	// What does found and !shot mean - do we ever hit it?
+//	fmt.Println("---Passo--4", *elem)
 	if found && !shot {
 		return nil, nil, nil, ServerFailure
 	}
 
 	// Found entire name.
 	if found && shot {
+//	fmt.Println("---Passo--5")
 
+		// Suppongo di non cercare CNAME con * nel nome
 		if rrs := elem.Type(dns.TypeCNAME); len(rrs) > 0 && qtype != dns.TypeCNAME {
 			return z.externalLookup(ctx, state, elem, rrs)
 		}
 
-		rrs := elem.Type(qtype)
+		var rrs []dns.RR
+		if star {
+			rrs = elems.ElemsType(qtype)
+		} else {
+			rrs = elem.Type(qtype)
+		}
+
+//		fmt.Println("---Passo--6 ", rrs, star)
 
 		// NODATA
 		if len(rrs) == 0 {

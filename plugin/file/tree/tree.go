@@ -14,6 +14,8 @@
 package tree
 
 import "github.com/miekg/dns"
+import "fmt"
+import "strings"
 
 const (
 	td234 = iota
@@ -164,6 +166,67 @@ func (n *Node) search(qname string) (*Node, bool) {
 
 	return n, false
 }
+
+// Search all nodes on tree starting with a prefix
+// the prefix is the first part of qname up to the *
+func (t *Tree) Tsearch(qname string) (*Elems, bool) {
+	fmt.Println("---Tsearch---")
+	if t.Root == nil {
+		return nil, false
+	}
+	idx := strings.Index(qname, "*")
+	prf := qname[:idx]
+	fmt.Println("Prefix ", prf)
+	parte := strings.Replace(qname, "*", "", 1)
+	// Search Node with name smaller than prefix
+	var es Elems
+	n, res := t.Prev(parte) // Return *Elem. use variable e not n
+	if !res {
+		// nothing smaller exist
+		fmt.Println("Not found ")
+		return nil, false
+	}
+
+	fmt.Println(parte, " Found ", n.Name())
+	if strings.Compare(prf, n.Name()[:idx]) == 0 {
+		// The name found can start whit prefix
+		fmt.Println("===>add ", n.Name())
+		es.name = qname
+		es.ms = make([]Elem, 0, 20)
+		//		fmt.Printf("--treee- %T ++%T++\n",  es, es.ms)
+		es.ms = append(es.ms, *n)
+	}
+
+	// Next I search all' name greater than each other until
+	// the start with prefix
+	n, res = t.Nextgt(n.Name())
+	uffa := n.Name()[:idx]
+	v := strings.Compare(prf, n.Name()[:idx])
+	fmt.Println("COMPARE ", uffa, " ", v)
+	for ; strings.Compare(prf, n.Name()[:idx]) == 0;  {
+		nb := n
+		// fmt.Println("PRIMA ", nb.Name())
+
+		//fmt.Println(" SUCCESSIVo ", nb.Name())
+		fmt.Println("===>Add  ", n.name)
+		es.ms = append(es.ms, *nb)
+
+		n, res = t.Nextgt(n.Name())
+		// fmt.Println("DOPO ", n.Name()," TTTT ",  strings.Compare(nb.Name(), n.Name()))
+		// This control must be done on nextgt, not here
+		if  strings.Compare(nb.Name(), n.Name()) == 0 {
+			fmt.Println("INSOMMA")
+			break
+		}
+	}
+	/*
+		if n == nil {
+			return es, res
+		}
+	*/
+	return &es, res
+}
+
 
 // Insert inserts rr into the Tree at the first match found
 // with e or when a nil node is reached.
@@ -424,6 +487,101 @@ func (n *Node) ceil(qname string) *Node {
 	}
 	return n
 }
+
+// Nextgt returns the smallest value  greater than the qname according to Less().
+// original Next can be used skipping if name is equal?
+func (t *Tree) Nextgt(qname string) (*Elem, bool) {
+	fmt.Println("NextGT")
+	if t.Root == nil {
+		return nil, false
+	}
+	fmt.Println("Chiamo nextgt ", qname)
+	n, _ := nextgt(t.Root, qname)
+	if n == nil {
+		return nil, false
+	}
+	return n, true
+}
+
+func (n *Node) ceilgt(qname string) *Node {
+	if n == nil {
+		return nil
+	}
+	switch c := Less(n.Elem, qname); {
+	case c == 0:
+		fmt.Println("Uguale")
+		return n.Right.ceil(qname)
+	case c > 0:
+		return n.Right.ceil(qname)
+	default:
+		if l := n.Left.ceil(qname); l != nil {
+			return l
+		}
+	}
+	return n
+}
+
+var ptr *Node
+
+func nextgt(n *Node, qname string) (*Elem, bool) {
+//	fmt.Println("CHIAMO nextgt ", qname)
+	// all return values of nested call need to be managed!
+	// here is not done.
+	if n == nil {
+		return nil, false // è come tornare nil
+	}
+	switch c := Less(n.Elem, qname); {
+	case c < 0: // n.Elem > qname
+		ptr = n // remenber the father's name 
+		n = n.Left
+		nextgt(n, qname) // move left  (smaller)
+
+	case c > 0: // n.Elem < qname
+		n = n.Right  //  move right  (greater)
+		nextgt(n, qname)
+
+	case c == 0:
+		if n.Right != nil { //risalgo
+			n = n.Right
+			ptr = n
+			for n.Left != nil {
+				n = n.Left
+				fmt.Println("LEFT ")
+				ptr = n
+			}
+			// fmt.Println("trovato")
+			// nodePrint(n)
+			return ptr.Elem, true
+		}
+
+	default:
+		fmt.Println("DEFAULT ")
+		return ptr.Elem, true	//qui non dovrei arrivare meglio nil, false
+
+	}
+//	nodePrint(ptr)
+//	fmt.Println("Fine ")
+	return ptr.Elem, true
+}
+
+
+// Print node and its left and right childrens
+func nodePrint(nd *Node) {
+	if nd ==  nil {
+		fmt.Println("NIL ")
+		return
+	}
+	fmt.Printf("Nodo %s ", nd.Elem.Name())
+	if nd.Left != nil {
+		fmt.Printf("Left %s ", nd.Left.Elem.Name())
+	}
+	if nd.Right != nil {
+		fmt.Printf("Right %s ", nd.Right.Elem.Name())
+	}
+	fmt.Printf("\n")
+	return
+}
+
 
 /*
 Copyright ©2012 The bíogo Authors. All rights reserved.

@@ -1,0 +1,33 @@
+$ORIGIN rex.loc.
+@                      3600 SOA   ns1.rex.loc. (
+                              zone-admin.dyndns.com.     ; address of responsible party
+                              2016072707                 ; serial number
+                              3600                       ; refresh period
+                              600                        ; retry period
+                              604800                     ; expire time
+                              1800                     ) ; minimum ttl
+                      86400 NS    ns1.rex.loc.
+                      86400 NS    ns2.rex.loc.
+                       3600 MX    30 mail.example.com.
+                         60 A     204.13.248.106
+                       3600 TXT   "v=spf1 includespf.dynect.net ~all"
+ns1                     400 A     127.0.0.1
+ns1                     400 A     127.0.0.2
+ns1                     400 A     127.0.0.3
+ns1                     400 TXT   "Questo è il TXT di ns1"
+ns2                     400 TXT   "Questo è il TXT di ns2"
+ns2                     400 A     127.0.0.2
+ns3                     400 A     127.0.0.3
+ns4                     400 A     127.0.0.4
+van                     400 A     127.0.0.4
+van                     400 A     127.0.0.4
+mache                   400 A	  127.0.1.1
+mache                   400 TXT   "Questo è il TXT di mache"
+mail                  14400 A     204.13.248.106
+vpn                      60 A     216.146.45.240
+webapp                   60 A     216.146.46.10
+webapp                   60 A     216.146.46.11
+www                   43200 CNAME rex.loc.
+ciccio 	 	      14400 A     10.0.0.1
+_sip._tcp              6400 SRV   0 5 5060 webapp.rex.loc.
+
