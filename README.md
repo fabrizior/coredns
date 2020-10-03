@@ -8,6 +8,32 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/coredns/coredns)](https://goreportcard.com/report/coredns/coredns)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1250/badge)](https://bestpractices.coreinfrastructure.org/projects/1250)
 
+## WARNING:
+For use on geosearch, please modify the go.mod file, the row with replace, modiy the second part with your lical path.
+
+Ex.:
+ 
+```
+replace github.com/coredns/coredns/plugin/file => /tmp/coredns/plugin/file/
+```
+
+to 
+
+```
+replace github.com/coredns/coredns/plugin/file => /<your_coredns_directory>/coredns/plugin/file/
+```
+
+this force all modules/include to use the modified code.
+
+
+Query example: 
+
+```
+dig @127.0.0.1 -p 5300 -t TXT n*.rex.loc
+```
+
+---
+
 CoreDNS is a DNS server/forwarder, written in Go, that chains [plugins](https://coredns.io/plugins).
 Each plugin performs a (DNS) function.
 
